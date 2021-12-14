@@ -23,16 +23,19 @@ namespace newtype {
       unsigned int patch;
     } hbVersion_ = { 0 };
     FontVector fonts_;
+    IDType fontIndex_ = 0;
+    IDType textIndex_ = 0;
   protected:
     inline FT_Library ft() { return freeType_; }
   public:
     ManagerImpl( Host* host );
     inline Host* host() { return host_; }
     bool initialize();
-    virtual FontPtr createFont();
+    FontPtr createFont() override;
     virtual void loadFont( FontPtr font, span<uint8_t> buffer, Real size );
-    virtual void unloadFont( FontPtr font );
-    virtual TextPtr createText( FontPtr font );
+    void unloadFont( FontPtr font ) override;
+    TextPtr createText( FontPtr font ) override;
+    virtual FontVector& fonts();
     void shutdown();
     ~ManagerImpl();
   };

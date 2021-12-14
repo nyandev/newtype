@@ -7,19 +7,31 @@ namespace newtype {
   class ManagerImpl;
   class TextImpl;
 
-  struct TextureAtlas {
+  class TextureAtlas: public Texture {
+  private:
     vector<vec3i> nodes_;
-    size_t width_;
-    size_t height_;
-    size_t depth_;
+    vec2i size_;
+    int depth_;
     size_t used_;
     vector<uint8_t> data_;
-    TextureAtlas( const size_t width, const size_t height, const size_t depth );
-    void setRegion( const size_t x, const size_t y, const size_t width, const size_t height, const uint8_t* data, const size_t stride );
-    int fit( const size_t index, const size_t width, const size_t height );
+    bool dirty_;
+  public:
+    TextureAtlas( const vec2i& size, int depth );
+    void setRegion( int x, int y, uint32_t width, uint32_t height, const uint8_t* data, size_t stride );
+    int fit( size_t index, uint32_t width, uint32_t height );
     void merge();
-    vec4i getRegion( const size_t width, const size_t height );
+    vec4i getRegion( uint32_t width, uint32_t height );
     void clear();
+  public:
+    inline int depth() const noexcept { return depth_; }
+    inline uint8_t* data() { return data_.data(); }
+    inline vec2 fdimensions() const { return vec2( static_cast<Real>( size_.x ), static_cast<Real>( size_.y ) ); }
+    TextureFormat format() const override;
+    vec2i dimensions() const override;
+    const uint8_t* data() const override;
+    int bytesize() const override;
+    bool dirty() const override;
+    void markClean() override;
   };
 
   using TextureAtlasPtr = shared_ptr<TextureAtlas>;
@@ -33,6 +45,7 @@ namespace newtype {
     Real descender_ = 0.0f;
     Real linegap_ = 0.0f;
     bool loaded_ = false;
+    void* userdata_ = nullptr;
   private:
     ManagerImpl* manager_;
     FT_Face face_ = nullptr;
@@ -40,7 +53,9 @@ namespace newtype {
     GlyphMap glyphs_;
     TextureAtlasPtr atlas_;
     unique_ptr<Buffer> data_;
-    void load( span<uint8_t> source, Real pointSize, vec3i atlasSize );
+    IDType id_;
+    bool dirty_ = false;
+    void load( span<uint8_t> source, Real pointSize, vec2i atlasSize );
     void unload();
     void postLoad();
     void initEmptyGlyph();
@@ -48,13 +63,19 @@ namespace newtype {
   protected:
     void loadGlyph( GlyphIndex index, bool hinting );
     Glyph* getGlyph( GlyphIndex index );
+    void update(); // this will recreate the texture if needed
   public:
-    FontImpl( ManagerImpl* manager );
-    virtual Real size() const;
-    virtual Real ascender() const;
-    virtual Real descender() const;
-    virtual bool loaded() const;
-
+    FontImpl( ManagerImpl* manager, IDType id );
+    Real size() const override;
+    Real ascender() const override;
+    Real descender() const override;
+    bool loaded() const override;
+    bool dirty() const override;
+    void markClean() override;
+    const Texture& texture() const override;
+    void setUser( void* data ) override;
+    void* getUser() override;
+    IDType id() const override;
   };
 
 }

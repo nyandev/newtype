@@ -25,7 +25,8 @@ namespace newtype {
 
   }
 
-  TextImpl::TextImpl( ManagerImpl* manager, const Text::Features& features ): manager_( manager )
+  TextImpl::TextImpl( ManagerImpl* manager, IDType id, FontPtr font, const Text::Features& features ):
+  manager_( manager ), id_( id ), font_( move( font ) )
   {
     hbbuf_ = hb_buffer_create();
     string lang = "en";
@@ -42,6 +43,11 @@ namespace newtype {
   {
     if ( hbbuf_ )
       hb_buffer_destroy( hbbuf_ );
+  }
+
+  IDType TextImpl::id() const
+  {
+    return id_;
   }
 
   void TextImpl::setText( const unicodeString& text )
@@ -166,6 +172,16 @@ namespace newtype {
   FontPtr TextImpl::font()
   {
     return font_;
+  }
+
+  void TextImpl::setUser( void* data )
+  {
+    userdata_ = data;
+  }
+
+  void* TextImpl::getUser()
+  {
+    return userdata_;
   }
 
 }

@@ -19,8 +19,10 @@ namespace newtype {
     vector<hb_feature_t> features_;
     unicodeString text_;
     Mesh mesh_;
+    void* userdata_ = nullptr;
+    IDType id_;
   public:
-    TextImpl( ManagerImpl* manager, const Text::Features& features );
+    TextImpl( ManagerImpl* manager, IDType id, FontPtr font, const Text::Features& features );
     virtual ~TextImpl();
     void setText( const unicodeString& text ) override;
     void update() override;
@@ -30,6 +32,9 @@ namespace newtype {
     bool dirty() const override;
     FontPtr font() override;
     void regenerate();
+    void setUser( void* data ) override;
+    void* getUser() override;
+    IDType id() const override;
   };
 
 }

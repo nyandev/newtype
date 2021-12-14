@@ -54,7 +54,7 @@ namespace newtype {
 
   FontPtr ManagerImpl::createFont()
   {
-    auto font = make_shared<FontImpl>( this );
+    auto font = make_shared<FontImpl>( this, fontIndex_++ );
     fonts_.push_back( font );
 
     return move( font );
@@ -64,7 +64,7 @@ namespace newtype {
   {
     auto fnt = FONT_IMPL_CAST( font );
     if ( fnt )
-      fnt->load( buffer, size, vec3i( 1024, 1024, 1 ) );
+      fnt->load( buffer, size, vec2i( 1024, 1024 ) );
   }
 
   void ManagerImpl::unloadFont( FontPtr font )
@@ -79,8 +79,13 @@ namespace newtype {
     Text::Features feats;
     feats.kerning = true;
     feats.ligatures = true;
-    auto text = make_shared<TextImpl>( this, feats );
+    auto text = make_shared<TextImpl>( this, textIndex_++, font, feats );
     return text;
+  }
+
+  FontVector& ManagerImpl::fonts()
+  {
+    return fonts_;
   }
 
   void ManagerImpl::shutdown()

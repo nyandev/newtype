@@ -14,6 +14,8 @@ namespace newtype {
 
   constexpr int c_dpi = 72;
 
+  using IDType = uint64_t;
+
   using Codepoint = uint32_t;
   using GlyphIndex = uint32_t;
 
@@ -42,6 +44,22 @@ namespace newtype {
   using Vertices = vector<Vertex>;
   using Indices = vector<VertexIndex>;
 
+  enum TextureFormat {
+    TextureFormat_R8,
+    TextureFormat_RGB8,
+    TextureFormat_RGBA8
+  };
+
+  class Texture {
+  public:
+    virtual TextureFormat format() const = 0;
+    virtual vec2i dimensions() const = 0;
+    virtual const uint8_t* data() const = 0;
+    virtual int bytesize() const = 0;
+    virtual bool dirty() const = 0;
+    virtual void markClean() = 0;
+  };
+
   class Mesh {
   public:
     Vertices vertices_;
@@ -51,11 +69,15 @@ namespace newtype {
 
   using MeshPtr = shared_ptr<Mesh>;
 
+  class Font;
+
   class Host {
   public:
     virtual void* newtypeMemoryAllocate( uint32_t size ) = 0;
     virtual void* newtypeMemoryReallocate( void* address, uint32_t newSize ) = 0;
     virtual void newtypeMemoryFree( void* address ) = 0;
+    virtual void newtypeFontTextureCreated( Font& font, Texture& texture ) = 0;
+    virtual void newtypeFontTextureDestroyed( Font& font, Texture& texture ) = 0;
   };
 
   class Font {
@@ -70,6 +92,12 @@ namespace newtype {
     virtual Real ascender() const = 0;
     virtual Real descender() const = 0;
     virtual bool loaded() const = 0;
+    virtual bool dirty() const = 0;
+    virtual const Texture& texture() const = 0;
+    virtual void markClean() = 0;
+    virtual void setUser( void* data ) = 0;
+    virtual void* getUser() = 0;
+    virtual IDType id() const = 0;
   };
 
   using FontPtr = shared_ptr<Font>;
@@ -82,6 +110,7 @@ namespace newtype {
       bool kerning : 1;
     };
   public:
+    virtual ~Text();
     virtual void setText( const unicodeString& text ) = 0;
     virtual void update() = 0;
     virtual const Mesh& mesh() const = 0;
@@ -89,7 +118,9 @@ namespace newtype {
     virtual void pen( const vec3& pen ) = 0;
     virtual bool dirty() const = 0;
     virtual FontPtr font() = 0;
-    virtual ~Text();
+    virtual void setUser( void* data ) = 0;
+    virtual void* getUser() = 0;
+    virtual IDType id() const = 0;
   };
 
   using TextPtr = shared_ptr<Text>;
@@ -100,6 +131,7 @@ namespace newtype {
     virtual void loadFont( FontPtr font, span<uint8_t> buffer, Real size ) = 0;
     virtual void unloadFont( FontPtr font ) = 0;
     virtual TextPtr createText( FontPtr font ) = 0;
+    virtual FontVector& fonts() = 0;
   };
 
   using fnNewtypeInitialize = Manager* ( NEWTYPE_CALL* )( uint32_t version, Host* host );

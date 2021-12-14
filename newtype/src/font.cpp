@@ -10,14 +10,20 @@ namespace newtype {
     //
   }
 
-  FontImpl::FontImpl( ManagerImpl* manager ): manager_( manager )
+  FontImpl::FontImpl( ManagerImpl* manager, IDType id ): manager_( manager ), id_( id )
   {
     //
   }
 
-  void FontImpl::load( span<uint8_t> source, Real pointSize, vec3i atlasSize )
+  IDType FontImpl::id() const
   {
-    atlas_ = make_shared<TextureAtlas>( atlasSize.x, atlasSize.y, atlasSize.z );
+    return id_;
+  }
+
+  void FontImpl::load( span<uint8_t> source, Real pointSize, vec2i atlasSize )
+  {
+    atlas_ = make_shared<TextureAtlas>( atlasSize, 1 );
+    manager_->host()->newtypeFontTextureCreated( *this, *atlas_.get() );
 
     data_ = make_unique<Buffer>( manager_->host(), source );
     size_ = pointSize;
@@ -56,6 +62,8 @@ namespace newtype {
 
     postLoad();
     initEmptyGlyph();
+
+    loaded_ = true;
   }
 
   void FontImpl::forceUCS2Charmap()
@@ -97,16 +105,16 @@ namespace newtype {
     };
 #pragma warning( pop )
 
-    atlas_->setRegion( region.x, region.y, 4, 4, data, 0 );
+    atlas_->setRegion( (int)region.x, (int)region.y, 4, 4, data, 0 );
 
     Glyph glyph;
     glyph.index = 0;
-    glyph.coords[0].x = ( region.x + 2 ) / (Real)atlas_->width_;
-    glyph.coords[0].y = ( region.y + 2 ) / (Real)atlas_->height_;
-    glyph.coords[1].x = ( region.x + 3 ) / (Real)atlas_->width_;
-    glyph.coords[1].y = ( region.y + 3 ) / (Real)atlas_->height_;
+    glyph.coords[0] = vec2( region.x + 2, region.y + 2 ) / atlas_->fdimensions();
+    glyph.coords[1] = vec2( region.x + 3, region.y + 3 ) / atlas_->fdimensions();
 
     glyphs_[0] = move( glyph );
+
+    dirty_ = true;
   }
 
   void FontImpl::loadGlyph( GlyphIndex index, bool hinting )
@@ -117,7 +125,7 @@ namespace newtype {
     flags |= FT_LOAD_RENDER;
     flags |= ( hinting ? FT_LOAD_FORCE_AUTOHINT : ( FT_LOAD_NO_HINTING | FT_LOAD_NO_AUTOHINT ) );
 
-    if ( atlas_->depth_ == 3 )
+    if ( atlas_->depth() == 3 )
     {
       FT_Library_SetLcdFilter( ft, FT_LCD_FILTER_DEFAULT );
       flags |= FT_LOAD_TARGET_LCD;
@@ -140,7 +148,7 @@ namespace newtype {
 
     vec4i padding( 0, 0, 0, 0 );
 
-    auto src_w = static_cast<uint32_t>( bitmap.width / atlas_->depth_ );
+    auto src_w = static_cast<uint32_t>( bitmap.width / atlas_->depth() );
     auto src_h = static_cast<uint32_t>( bitmap.rows );
     auto tgt_w = src_w + static_cast<uint32_t>( padding.x + padding.z );
     auto tgt_h = src_h + static_cast<uint32_t>( padding.y + padding.w );
@@ -151,17 +159,17 @@ namespace newtype {
 
     auto coord = vec2i( region.x, region.y );
     {
-      Buffer tmp( manager_->host(), static_cast<uint32_t>( tgt_w * tgt_h * atlas_->depth_ ) );
-      auto dst_ptr = tmp.data() + ( padding.y * tgt_w + padding.x ) * atlas_->depth_;
+      Buffer tmp( manager_->host(), static_cast<uint32_t>( tgt_w * tgt_h * atlas_->depth() ) );
+      auto dst_ptr = tmp.data() + ( padding.y * tgt_w + padding.x ) * atlas_->depth();
       auto src_ptr = bitmap.buffer;
       for ( uint32_t i = 0; i < src_h; ++i )
       {
         memcpy( dst_ptr, src_ptr, bitmap.width );
-        dst_ptr += tgt_w * atlas_->depth_;
+        dst_ptr += tgt_w * atlas_->depth();
         src_ptr += bitmap.pitch;
       }
 
-      atlas_->setRegion( coord.x, coord.y, tgt_w, tgt_h, tmp.data(), tgt_w * atlas_->depth_ );
+      atlas_->setRegion( (int)coord.x, (int)coord.y, (int)tgt_w, (int)tgt_h, tmp.data(), (int)tgt_w * atlas_->depth() );
     }
 
     Glyph glyph;
@@ -169,12 +177,12 @@ namespace newtype {
     glyph.width = tgt_w;
     glyph.height = tgt_h;
     glyph.bearing = glyphCoords;
-    glyph.coords[0].x = coord.x / (Real)atlas_->width_;
-    glyph.coords[0].y = coord.y / (Real)atlas_->height_;
-    glyph.coords[1].x = ( coord.x + glyph.width ) / (Real)atlas_->width_;
-    glyph.coords[1].y = ( coord.y + glyph.height ) / (Real)atlas_->height_;
+    glyph.coords[0] = vec2( coord ) / atlas_->fdimensions();
+    glyph.coords[1] = vec2( coord.x + glyph.width, coord.y + glyph.height ) / atlas_->fdimensions();
 
     glyphs_[index] = move( glyph );
+
+    dirty_ = true;
   }
 
   Glyph* FontImpl::getGlyph( GlyphIndex index )
@@ -197,6 +205,11 @@ namespace newtype {
   {
     if ( hbfnt_ )
       hb_font_destroy( hbfnt_ );
+    manager_->host()->newtypeFontTextureDestroyed( *this, *atlas_.get() );
+    atlas_.reset();
+    data_.reset();
+    size_ = 0.0f;
+    loaded_ = false;
     // I think the face is destroyed by HB
     //if ( face_ )
     //  FT_Done_Face( face_ );
@@ -220,6 +233,32 @@ namespace newtype {
   bool FontImpl::loaded() const
   {
     return loaded_;
+  }
+
+  bool FontImpl::dirty() const
+  {
+    return dirty_;
+  }
+
+  void FontImpl::markClean()
+  {
+    dirty_ = false;
+  }
+
+  const Texture& FontImpl::texture() const
+  {
+    assert( atlas_ );
+    return *atlas_.get();
+  }
+
+  void FontImpl::setUser( void* data )
+  {
+    userdata_ = data;
+  }
+
+  void* FontImpl::getUser()
+  {
+    return userdata_;
   }
 
 }

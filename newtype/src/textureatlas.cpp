@@ -3,39 +3,67 @@
 
 namespace newtype {
 
-  TextureAtlas::TextureAtlas( const size_t width, const size_t height, const size_t depth )
+  TextureAtlas::TextureAtlas( const vec2i& size, int depth ):
+  size_( size ), depth_( depth ), used_( 0 ), dirty_( true )
   {
     assert( depth == 1 || depth == 3 || depth == 4 );
 
-    nodes_.emplace_back( 1, 1, width - 2 );
-
-    used_ = 0;
-    width_ = width;
-    height_ = height;
-    depth_ = depth;
-
-    data_.resize( width * height * depth );
+    nodes_.emplace_back( 1, 1, size_.x - 2 );
+    data_.resize( size_.x * size_.y * depth_ );
     memset( data_.data(), 0, data_.size() );
   }
 
-  void TextureAtlas::setRegion( const size_t x, const size_t y, const size_t width, const size_t height, const uint8_t* data, const size_t stride )
+  TextureFormat TextureAtlas::format() const
   {
-    assert( x > 0 && y > 0 && ( x < ( width_ - 1 ) ) && ( y < ( height_ - 1 ) ) );
-    assert( ( x + width ) <= ( width_ - 1 ) && ( y + height ) <= ( height_ - 1 ) );
+    if ( depth_ == 1 )
+      return TextureFormat_R8;
+    if ( depth_ == 3 )
+      return TextureFormat_RGB8;
+    return TextureFormat_RGBA8;
+  }
+
+  vec2i TextureAtlas::dimensions() const
+  {
+    return size_;
+  }
+
+  const uint8_t* TextureAtlas::data() const
+  {
+    return data_.data();
+  }
+
+  int TextureAtlas::bytesize() const
+  {
+    return static_cast<int>( data_.size() );
+  }
+
+  bool TextureAtlas::dirty() const
+  {
+    return dirty_;
+  }
+
+  void TextureAtlas::markClean()
+  {
+    dirty_ = false;
+  }
+
+  void TextureAtlas::setRegion( int x, int y, uint32_t width, uint32_t height, const uint8_t* data, size_t stride )
+  {
+    assert( x > 0 && y > 0 && ( x < ( size_.x - 1 ) ) && ( y < ( size_.y - 1 ) ) );
+    assert( ( x + width ) <= ( size_.x - 1 ) && ( y + height ) <= ( size_.y - 1 ) );
 
     assert( height == 0 || ( data && width > 0 ) );
 
-    auto depth = depth_;
-    size_t charsize = sizeof( uint8_t );
     for ( size_t i = 0; i < height; ++i )
     {
-      memcpy(
-        data_.data() + ( ( y + i ) * width_ + x ) * charsize * depth,
-        data + ( i * stride ) * charsize, width * charsize * depth );
+      memcpy( data_.data() + ( ( y + i ) * size_.x + x ) * depth_,
+        data + ( i * stride ), width * depth_ );
     }
+
+    dirty_ = true;
   }
 
-  int TextureAtlas::fit( const size_t index, const size_t width, const size_t height )
+  int TextureAtlas::fit( size_t index, uint32_t width, uint32_t height )
   {
     auto node = &nodes_[index];
     auto x = node->x;
@@ -43,7 +71,7 @@ namespace newtype {
     auto width_left = (int64_t)width;
     auto i = index;
 
-    if ( ( x + width ) > ( width_ - 1 ) )
+    if ( ( x + width ) > ( size_.x - 1 ) )
       return -1;
 
     while ( width_left > 0 )
@@ -51,7 +79,7 @@ namespace newtype {
       node = &nodes_[i];
       if ( node->y > y )
         y = node->y;
-      if ( ( y + height ) > ( height_ - 1 ) )
+      if ( ( y + height ) > ( size_.y - 1 ) )
         return -1;
       width_left -= node->z;
       ++i;
@@ -76,15 +104,15 @@ namespace newtype {
     }
   }
 
-  vec4i TextureAtlas::getRegion( const size_t width, const size_t height )
+  vec4i TextureAtlas::getRegion( uint32_t width, uint32_t height )
   {
     int best_index = -1;
-    size_t best_height = numeric_limits<size_t>::max();
-    size_t best_width = numeric_limits<size_t>::max();
+    uint32_t best_height = numeric_limits<uint32_t>::max();
+    uint32_t best_width = numeric_limits<uint32_t>::max();
 
     vec4i region;
 
-    for ( size_t i = 0; i < nodes_.size(); ++i )
+    for ( uint32_t i = 0; i < nodes_.size(); ++i )
     {
       auto y = fit( i, width, height );
       if ( y >= 0 )
@@ -94,7 +122,7 @@ namespace newtype {
         {
           best_height = ( y + height );
           best_index = (int)i;
-          best_width = node->z;
+          best_width = static_cast<uint32_t>( node->z );
           region.x = node->x;
           region.y = y;
         }
@@ -142,12 +170,13 @@ namespace newtype {
 
   void TextureAtlas::clear()
   {
-    vec3i node( 1, 1, 1 );
+    vec3i node( 1 );
     nodes_.clear();
     used_ = 0;
-    node.z = width_ - 2;
+    node.z = size_.x - 2;
     nodes_.push_back( move( node ) );
-    memset( data_.data(), 0, width_ * height_ * depth_ );
+    memset( data_.data(), 0, size_.x * size_.y * depth_ );
+    dirty_ = true;
   }
 
 }
