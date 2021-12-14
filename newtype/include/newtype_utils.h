@@ -11,6 +11,11 @@ namespace newtype {
     return static_cast<int>( ::roundf( value ) );
   }
 
+  inline int ifloor( Real value )
+  {
+    return static_cast<int>( ::floorf( value ) );
+  }
+
   inline bool epsilonCompare( const vec3& a, const vec3& b )
   {
     return glm::all( glm::epsilonEqual( a, b, vec3( 0.01f ) ) );

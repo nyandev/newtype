@@ -8,7 +8,7 @@ namespace newtype {
   class ManagerImpl: public Manager {
     friend class FontImpl;
   private:
-    Host* host_ = nullptr;
+    Host* host_;
     FT_MemoryRec_ ftMemAllocator_;
     FT_Library freeType_ = nullptr;
     struct FreeTypeVersion {

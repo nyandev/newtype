@@ -28,11 +28,14 @@ namespace newtype {
 
   using GlyphMap = map<GlyphIndex, Glyph>;
 
+#pragma pack( push, 1 )
   struct Vertex {
     vec3 position;
     vec2 texcoord;
     vec4 color;
+    Vertex( vec3 pos, vec2 tc, vec4 clr ): position( move( pos ) ), texcoord( move( tc ) ), color( move( clr ) ) {}
   };
+#pragma pack( pop )
 
   using VertexIndex = unsigned int;
 
@@ -40,6 +43,7 @@ namespace newtype {
   using Indices = vector<VertexIndex>;
 
   class Mesh {
+  public:
     Vertices vertices_;
     Indices indices_;
     bool dirty_ = true;
@@ -55,6 +59,7 @@ namespace newtype {
   };
 
   class Font {
+  public:
     struct Specs {
       vec2i atlasSize_;
       Real pointSize_;
@@ -77,7 +82,9 @@ namespace newtype {
       bool kerning : 1;
     };
   public:
-    virtual void setTextUTF16( uint16_t* data, uint32_t length ) = 0;
+    virtual void setText( const unicodeString& text ) = 0;
+    virtual void update() = 0;
+    virtual const Mesh& mesh() const = 0;
     virtual vec3 pen() const = 0;
     virtual void pen( const vec3& pen ) = 0;
     virtual bool dirty() const = 0;

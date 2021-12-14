@@ -24,7 +24,7 @@ namespace newtype {
       me->host()->newtypeMemoryFree( block );
   }
 
-  ManagerImpl::ManagerImpl( Host* host )
+  ManagerImpl::ManagerImpl( Host* host ): host_( host )
   {
     ftMemAllocator_.user = this;
     ftMemAllocator_.alloc = ftMemoryAllocate;
@@ -44,6 +44,8 @@ namespace newtype {
 
     FT_Library_Version( freeType_, &ftVersion_.major, &ftVersion_.minor, &ftVersion_.patch );
     hb_version( &hbVersion_.major, &hbVersion_.minor, &hbVersion_.patch );
+
+    hb_icu_get_unicode_funcs();
 
     ftVersion_.trueTypeSupport = FT_Get_TrueType_Engine_Type( freeType_ );
 

@@ -52,6 +52,7 @@ namespace newtype {
     FT_Set_Transform( face_, &matrix, nullptr );
 
     hbfnt_ = hb_ft_font_create_referenced( face_ );
+    hb_ft_font_set_funcs( hbfnt_ ); // Doesn't create_referenced already call this?
 
     postLoad();
     initEmptyGlyph();
@@ -196,8 +197,9 @@ namespace newtype {
   {
     if ( hbfnt_ )
       hb_font_destroy( hbfnt_ );
-    if ( face_ )
-      FT_Done_Face( face_ );
+    // I think the face is destroyed by HB
+    //if ( face_ )
+    //  FT_Done_Face( face_ );
   }
 
   Real FontImpl::size() const

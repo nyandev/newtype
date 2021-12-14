@@ -57,6 +57,18 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
+// ICU
+#include <unicode/utypes.h>
+#include <unicode/uchar.h>
+#include <unicode/locid.h>
+#include <unicode/ustring.h>
+#include <unicode/ucnv.h>
+#include <unicode/unistr.h>
+#include <unicode/utf8.h>
+#include <unicode/utf16.h>
+
+#ifdef NEWTYPE_EXPORTS
+
 // FreeType2
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -79,6 +91,9 @@
 // Harfbuzz
 #include <hb.h>
 #include <hb-ft.h>
+#include <hb-icu.h>
+
+#endif
 
 namespace newtype {
 
@@ -110,6 +125,9 @@ namespace newtype {
   namespace chrono {
     using namespace std::chrono;
   }
+
+  using unicodeString = icu::UnicodeString;
+  using unicodePiece = icu::StringPiece;
 
   using std::move;
   using std::pair;

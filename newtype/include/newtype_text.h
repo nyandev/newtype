@@ -17,15 +17,18 @@ namespace newtype {
     hb_buffer_t* hbbuf_ = nullptr;
     FontPtr font_;
     vector<hb_feature_t> features_;
-    unique_ptr<Buffer> textdata_;
+    unicodeString text_;
+    Mesh mesh_;
   public:
     TextImpl( ManagerImpl* manager, const Text::Features& features );
     virtual ~TextImpl();
-    virtual void setTextUTF16( uint16_t* data, uint32_t length );
-    virtual vec3 pen() const;
-    virtual void pen( const vec3& pen );
-    virtual bool dirty() const;
-    virtual FontPtr font();
+    void setText( const unicodeString& text ) override;
+    void update() override;
+    const Mesh& mesh() const override;
+    vec3 pen() const override;
+    void pen( const vec3& pen ) override;
+    bool dirty() const override;
+    FontPtr font() override;
     void regenerate();
   };
 
