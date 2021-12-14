@@ -1,5 +1,6 @@
 #pragma once
 #include "newtype.h"
+#include "newtype_utils.h"
 
 namespace newtype {
 

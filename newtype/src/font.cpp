@@ -7,6 +7,11 @@ namespace newtype {
 
   constexpr int c_dpi = 72;
 
+  Font::~Font()
+  {
+    //
+  }
+
   FontImpl::FontImpl( ManagerImpl* manager ): manager_( manager )
   {
     //

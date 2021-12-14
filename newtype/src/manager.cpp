@@ -76,7 +76,7 @@ namespace newtype {
   {
     Text::Features feats;
     feats.kerning = true;
-    feats.ligatures = trues;
+    feats.ligatures = true;
     auto text = make_shared<TextImpl>( this, feats );
     return text;
   }

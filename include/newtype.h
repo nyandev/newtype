@@ -58,7 +58,7 @@ namespace newtype {
       Real pointSize_;
     };
   public:
-    virtual ~Font() = 0;
+    virtual ~Font();
     virtual Real size() const = 0;
     virtual Real ascender() const = 0;
     virtual Real descender() const = 0;

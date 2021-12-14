@@ -5,6 +5,11 @@
 
 namespace newtype {
 
+  Text::~Text()
+  {
+    //
+  }
+
   namespace features {
 
     const hb_tag_t KernTag = HB_TAG( 'k', 'e', 'r', 'n' ); // kerning operations
@@ -40,7 +45,7 @@ namespace newtype {
       textdata_.reset();
       return;
     }
-    auto bytelength = length * sizeof( uint16_t );
+    auto bytelength = static_cast<uint32_t>( length * sizeof( uint16_t ) );
     textdata_ = make_unique<Buffer>( manager_->host(), bytelength );
     memcpy( textdata_->data(), reinterpret_cast<uint8_t*>( data ), bytelength );
   }
@@ -82,7 +87,7 @@ namespace newtype {
     auto info = hb_buffer_get_glyph_infos( hbbuf_, &glyphCount );
     auto gpos = hb_buffer_get_glyph_positions( hbbuf_, &glyphCount );
 
-    for ( unsigned int i = 0; i < glyphCount; ++i )
+    /*for ( unsigned int i = 0; i < glyphCount; ++i )
     {
       auto codepoint = text_.charAt( i );
       auto glyphindex = info[i].codepoint;
@@ -116,7 +121,7 @@ namespace newtype {
       mesh_->pushIndices( move( indices ) );
       mesh_->pushVertices( move( vertices ) );
       position += advance;
-    }
+    }*/
 
     dirty_ = false;
   }
