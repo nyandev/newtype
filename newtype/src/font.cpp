@@ -5,8 +5,6 @@
 
 namespace newtype {
 
-  constexpr int c_dpi = 72;
-
   Font::~Font()
   {
     //
@@ -21,7 +19,7 @@ namespace newtype {
   {
     atlas_ = make_shared<TextureAtlas>( atlasSize.x, atlasSize.y, atlasSize.z );
 
-    data_ = make_unique<Buffer>( manager_->host(), source);
+    data_ = make_unique<Buffer>( manager_->host(), source );
     size_ = pointSize;
 
     auto ftlib = manager_->ft();
@@ -130,7 +128,6 @@ namespace newtype {
     if ( fterr )
       NEWTYPE_FREETYPE_EXCEPT( "FreeType glyph loading error", fterr );
 
-    FT_Glyph ftglyph = nullptr;
     FT_GlyphSlot slot = nullptr;
     FT_Bitmap bitmap;
     vec2i glyphCoords;
@@ -142,10 +139,10 @@ namespace newtype {
 
     vec4i padding( 0, 0, 0, 0 );
 
-    uint32_t src_w = static_cast<uint32_t>( bitmap.width / atlas_->depth_ );
-    uint32_t src_h = static_cast<uint32_t>( bitmap.rows );
-    uint32_t tgt_w = src_w + static_cast<uint32_t>( padding.x + padding.z );
-    uint32_t tgt_h = src_h + static_cast<uint32_t>( padding.y + padding.w );
+    auto src_w = static_cast<uint32_t>( bitmap.width / atlas_->depth_ );
+    auto src_h = static_cast<uint32_t>( bitmap.rows );
+    auto tgt_w = src_w + static_cast<uint32_t>( padding.x + padding.z );
+    auto tgt_h = src_h + static_cast<uint32_t>( padding.y + padding.w );
 
     auto region = atlas_->getRegion( tgt_w + 1, tgt_h + 1 );
     if ( region.x < 0 )
@@ -177,9 +174,6 @@ namespace newtype {
     glyph.coords[1].y = ( coord.y + glyph.height ) / (Real)atlas_->height_;
 
     glyphs_[index] = move( glyph );
-
-    if ( ftglyph )
-      FT_Done_Glyph( ftglyph );
   }
 
   Glyph* FontImpl::getGlyph( GlyphIndex index )

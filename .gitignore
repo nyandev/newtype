@@ -325,3 +325,6 @@ ASALocalRun/
 .mfractor/
 
 *.lnk
+
+/bin/
+/lib/

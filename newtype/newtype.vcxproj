@@ -77,6 +77,10 @@
       <AdditionalDependencies>freetyped.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImportLibrary>$(SolutionDir)lib\$(TargetName).lib</ImportLibrary>
     </Link>
+    <PreBuildEvent>
+      <Command>gitwcrev "$(ProjectDir)newtype.rc.in" "$(ProjectDir)newtype.rc.in" "$(ProjectDir)newtype.rc" -qs</Command>
+      <Message>Generating versioned resource script</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -102,10 +106,11 @@
       <AdditionalDependencies>freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImportLibrary>$(SolutionDir)lib\$(TargetName).lib</ImportLibrary>
     </Link>
+    <PreBuildEvent>
+      <Command>gitwcrev "$(ProjectDir)newtype.rc.in" "$(ProjectDir)newtype.rc.in" "$(ProjectDir)newtype.rc" -qs</Command>
+      <Message>Generating versioned resource script</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <None Include="cpp.hint" />
-  </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\newtype.h" />
     <ClInclude Include="..\include\newtype_types.h" />
@@ -128,7 +133,9 @@
     <ClCompile Include="src\textureatlas.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="newtype.rc" />
+    <ResourceCompile Include="newtype.rc">
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -45,24 +45,14 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
-#endif    // English (United States) resources
-/////////////////////////////////////////////////////////////////////////////
-
-
-/////////////////////////////////////////////////////////////////////////////
-// English (United Kingdom) resources
-
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
-
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,1
- PRODUCTVERSION 1,0,0,1
+ FILEVERSION 1,0,0,$WCLOGCOUNT$
+ PRODUCTVERSION 1,0,0,$WCLOGCOUNT$
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -78,13 +68,13 @@ BEGIN
         BLOCK "040004b0"
         BEGIN
             VALUE "CompanyName", "nyandev"
-            VALUE "FileDescription", "Newtype Text Renderer"
-            VALUE "FileVersion", "1.0.0.1"
+            VALUE "FileDescription", "Newtype Text Renderer ($WCBRANCH$-$WCREV=8$)"
+            VALUE "FileVersion", "1.0.0.$WCLOGCOUNT$"
             VALUE "InternalName", "newtype.dll"
-            VALUE "LegalCopyright", "Copyright (C) 2021"
+            VALUE "LegalCopyright", "Copyright (c) $WCNOW=%Y$"
             VALUE "OriginalFilename", "newtype.dll"
-            VALUE "ProductName", "libnewtype"
-            VALUE "ProductVersion", "1.0.0.1"
+            VALUE "ProductName", "Newtype Text Renderer"
+            VALUE "ProductVersion", "$WCREV=8$"
         END
     END
     BLOCK "VarFileInfo"
@@ -93,7 +83,7 @@ BEGIN
     END
 END
 
-#endif    // English (United Kingdom) resources
+#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

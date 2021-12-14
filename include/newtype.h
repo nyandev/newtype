@@ -12,6 +12,8 @@
 
 namespace newtype {
 
+  constexpr int c_dpi = 72;
+
   using Codepoint = uint32_t;
   using GlyphIndex = uint32_t;
 
