@@ -48,14 +48,12 @@
     <TargetName>$(ProjectName)_d</TargetName>
     <OutDir>$(SolutionDir)bin\</OutDir>
     <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>C:\Code\SDK\glm\include;C:\Code\SDK\gsl\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetName>$(ProjectName)</TargetName>
     <OutDir>$(SolutionDir)bin\</OutDir>
     <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>C:\Code\SDK\glm\include;C:\Code\SDK\gsl\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -65,15 +63,15 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\extern\custom_fthb\include\freetype2;$(ProjectDir)..\extern\custom_fthb\include\harfbuzz;$(ProjectDir)..\include;$(ProjectDir)include;$(ProjectDir)..\..\SDK\v8\icu\common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\extern\custom_fthb\include\freetype2;$(ProjectDir)..\extern\custom_fthb\include\harfbuzz;$(ProjectDir)..\include;$(ProjectDir)include;$(ProjectDir)..\..\SDK\v8\icu\common;$(ICU_DIR)\include\common;$(GLM_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>$(SolutionDir)extern\custom_fthb\lib;$(ProjectDir)..\..\SDK\v8\lib\$(ConfigurationName)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\extern\custom_fthb\lib;$(ProjectDir)..\..\SDK\v8\lib\$(ConfigurationName);$(ICU_DIR)\lib\$(ConfigurationName)</AdditionalLibraryDirectories>
       <AdditionalDependencies>freetyped.lib;icuuc_d.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImportLibrary>$(SolutionDir)lib\$(TargetName).lib</ImportLibrary>
     </Link>
@@ -92,9 +90,9 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\extern\custom_fthb\include\freetype2;$(ProjectDir)..\extern\custom_fthb\include\harfbuzz;$(ProjectDir)..\include;$(ProjectDir)include;$(ProjectDir)..\..\SDK\v8\icu\common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\extern\custom_fthb\include\freetype2;$(ProjectDir)..\extern\custom_fthb\include\harfbuzz;$(ProjectDir)..\include;$(ProjectDir)include;$(ProjectDir)..\..\SDK\v8\icu\common;$(ICU_DIR)\include\common;$(GLM_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -102,7 +100,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>$(SolutionDir)extern\custom_fthb\lib;$(ProjectDir)..\..\SDK\v8\lib\$(ConfigurationName)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\extern\custom_fthb\lib;$(ProjectDir)..\..\SDK\v8\lib\$(ConfigurationName);$(ICU_DIR)\lib\$(ConfigurationName)</AdditionalLibraryDirectories>
       <AdditionalDependencies>freetype.lib;icuuc.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImportLibrary>$(SolutionDir)lib\$(TargetName).lib</ImportLibrary>
     </Link>

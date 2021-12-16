@@ -7,55 +7,30 @@
 #include <list>
 #include <map>
 #include <string>
-#include <fstream>
-#include <sstream>
-#include <queue>
-#include <regex>
-#include <stack>
 #include <cstdint>
 #include <algorithm>
-#include <random>
-#include <filesystem>
-#include <queue>
-#include <unordered_map>
 #include <utility>
-#include <variant>
-#include <any>
-#include <optional>
-#include <chrono>
-#include <set>
+#include <span>
 
 #undef min
 #undef max
-
-#include <gsl/gsl>
 
 // GLM
 #define GLM_FORCE_XYZW_ONLY // Hide rgba, stpq unions from vector types (avoiding bloat when examined in the debugger)
 #define GLM_FORCE_SIZE_T_LENGTH // Make size() on GLM types return size_t instead of int (for STL compatibility)
 #define GLM_FORCE_UNRESTRICTED_GENTYPE // Allow operation input types that strict GLSL wouldn't (such as int)
 #define GLM_ENABLE_EXPERIMENTAL // Enable experimental new features
-#if !defined( NEKO_VERBOSE_COMPILE ) && !defined( _DEBUG )
+#if !defined( NEWTYPE_VERBOSE ) && !defined( _DEBUG )
 #define GLM_FORCE_SILENT_WARNINGS
 #endif
 #ifndef _DEBUG
 #define GLM_FORCE_INLINE // Force inlining in release build
 #endif
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/matrix_access.hpp>
 #include <glm/gtc/epsilon.hpp>
-#include <glm/gtc/noise.hpp>
-#include <glm/gtc/random.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/transform.hpp>
-#include <glm/gtx/exterior_product.hpp>
-#include <glm/gtx/projection.hpp>
-#include <glm/gtx/perpendicular.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/euler_angles.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
 
 // ICU
 #include <unicode/utypes.h>
@@ -111,20 +86,13 @@ namespace newtype {
   using std::array;
   using std::vector;
   using std::list;
-  using std::set;
   using std::map;
-  using std::priority_queue;
-  using std::unordered_map;
   using std::make_shared;
   using std::shared_ptr;
   using std::make_unique;
   using std::unique_ptr;
 
-  using gsl::span;
-
-  namespace chrono {
-    using namespace std::chrono;
-  }
+  using std::span;
 
   using unicodeString = icu::UnicodeString;
   using unicodePiece = icu::StringPiece;
@@ -132,10 +100,6 @@ namespace newtype {
   using std::move;
   using std::pair;
   using std::make_pair;
-  using std::tuple;
-  using std::make_tuple;
-  using std::optional;
-  using std::make_optional;
   using std::initializer_list;
 
   using std::make_shared;
