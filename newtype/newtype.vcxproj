@@ -66,6 +66,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalIncludeDirectories>$(ProjectDir)..\extern\custom_fthb\include\freetype2;$(ProjectDir)..\extern\custom_fthb\include\harfbuzz;$(ProjectDir)..\include;$(ProjectDir)include;$(ProjectDir)..\..\SDK\v8\icu\common;$(ICU_DIR)\include\common;$(GLM_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>26812</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -93,6 +94,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalIncludeDirectories>$(ProjectDir)..\extern\custom_fthb\include\freetype2;$(ProjectDir)..\extern\custom_fthb\include\harfbuzz;$(ProjectDir)..\include;$(ProjectDir)include;$(ProjectDir)..\..\SDK\v8\icu\common;$(ICU_DIR)\include\common;$(GLM_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>26812</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
