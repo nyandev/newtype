@@ -15,14 +15,15 @@ namespace newtype {
     hb_direction_t direction_;
     bool dirty_ = false;
     hb_buffer_t* hbbuf_ = nullptr;
-    FontPtr font_;
+    FontFacePtr face_;
+    StyleID style_;
     vector<hb_feature_t> features_;
     unicodeString text_;
     Mesh mesh_;
     void* userdata_ = nullptr;
     IDType id_;
   public:
-    TextImpl( ManagerImpl* manager, IDType id, FontPtr font, const Text::Features& features );
+    TextImpl( ManagerImpl* manager, IDType id, FontFacePtr face, StyleID style, const Text::Features& features );
     virtual ~TextImpl();
     void setText( const unicodeString& text ) override;
     void update() override;
@@ -30,7 +31,7 @@ namespace newtype {
     vec3 pen() const override;
     void pen( const vec3& pen ) override;
     bool dirty() const override;
-    FontPtr font() override;
+    FontFacePtr face() override;
     void regenerate();
     void setUser( void* data ) override;
     void* getUser() override;

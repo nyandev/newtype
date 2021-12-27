@@ -49,6 +49,12 @@ namespace newtype {
 
     ftVersion_.trueTypeSupport = FT_Get_TrueType_Engine_Type( freeType_ );
 
+    char tmp[128];
+    sprintf_s( tmp, 128, "FreeType v%i.%i.%i HarfBuzz v%i.%i.%i",
+      ftVersion_.major, ftVersion_.minor, ftVersion_.patch,
+      hbVersion_.major, hbVersion_.minor, hbVersion_.patch );
+    verstr_ = tmp;
+
     return true;
   }
 
@@ -60,26 +66,36 @@ namespace newtype {
     return move( font );
   }
 
-  void ManagerImpl::loadFont( FontPtr font, span<uint8_t> buffer, Real size )
+  FontFacePtr ManagerImpl::loadFace( FontPtr font, span<uint8_t> buffer, FaceID faceIndex, Real size )
   {
     auto fnt = FONT_IMPL_CAST( font );
-    if ( fnt )
-      fnt->load( buffer, size, vec2i( 1024, 1024 ) );
+    if ( !fnt )
+      NEWTYPE_EXCEPT( "Font implementation cast failed" );
+    return fnt->loadFace( buffer, faceIndex, size );
+  }
+
+  StyleID ManagerImpl::loadStyle( FontFacePtr face, FontRendering rendering, Real thickness )
+  {
+    auto fce = FONTFACE_IMPL_CAST( face );
+    if ( !fce )
+      NEWTYPE_EXCEPT( "FontFace implementation cast failed" );
+    return fce->loadStyle( rendering, thickness );
   }
 
   void ManagerImpl::unloadFont( FontPtr font )
   {
     auto fnt = FONT_IMPL_CAST( font );
-    if ( fnt )
-      fnt->unload();
+    if ( !fnt )
+      NEWTYPE_EXCEPT( "Font implementation cast failed" );
+    fnt->unload();
   }
 
-  TextPtr ManagerImpl::createText( FontPtr font )
+  TextPtr ManagerImpl::createText( FontFacePtr face, StyleID style )
   {
     Text::Features feats;
     feats.kerning = true;
     feats.ligatures = true;
-    auto text = make_shared<TextImpl>( this, textIndex_++, font, feats );
+    auto text = make_shared<TextImpl>( this, textIndex_++, face, style, feats );
     return text;
   }
 
@@ -95,6 +111,11 @@ namespace newtype {
       FT_Done_Library( freeType_ );
       freeType_ = nullptr;
     }
+  }
+
+  const string& ManagerImpl::versionString() const
+  {
+    return verstr_;
   }
 
   ManagerImpl::~ManagerImpl()

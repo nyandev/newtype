@@ -5,6 +5,7 @@
 namespace newtype {
 
   class ManagerImpl;
+  class FontImpl;
   class TextImpl;
 
   class TextureAtlas: public Texture {
@@ -36,43 +37,91 @@ namespace newtype {
 
   using TextureAtlasPtr = shared_ptr<TextureAtlas>;
 
-  class FontImpl: public Font {
+#pragma pack( push, 1 )
+  union FontStyleIndex {
+    struct FontStyleData {
+      uint16_t face;
+      uint32_t size;
+      uint8_t outlineType;
+      uint8_t outlineSize;
+    } components;
+    StyleID value;
+  };
+#pragma pack( pop )
+
+  class FontStyleImpl: public FontStyle {
     friend class ManagerImpl;
     friend class TextImpl;
   private:
+    FontImpl* font_;
+    uint32_t storedFaceSize_;
+    Host* host_;
+    FontRendering rendering_;
+    Real outlineThickness_;
+    TextureAtlasPtr atlas_;
+    GlyphMap glyphs_;
+    bool dirty_ = false;
+  protected:
+    void initEmptyGlyph();
+    void loadGlyph( FT_Library ft, FT_Face face, GlyphIndex index, bool hinting );
+  public:
+    FontStyleImpl( FontImpl* font, uint32_t size, vec2i atlasSize, Host* host, FontRendering rendering, Real thickness );
+    StyleID id() const;
+    Glyph* getGlyph( FT_Library ft, FT_Face face, GlyphIndex index );
+    bool dirty() const override;
+    void markClean() override;
+    const Texture& texture() const override;
+    ~FontStyleImpl();
+  };
+
+  using FontStyleMap = map<StyleID, FontStylePtr>;
+
+  class FontFaceImpl: public FontFace {
+    friend class ManagerImpl;
+    friend class FontStyleImpl;
+    friend class TextImpl;
+  private:
+    FontImpl* font_;
+    FT_Face face_ = nullptr;
+    hb_font_t* hbfnt_ = nullptr;
     Real size_ = 0.0f;
     Real ascender_ = 0.0f;
     Real descender_ = 0.0f;
-    Real linegap_ = 0.0f;
+    FontStyleMap styles_;
+    StyleID loadStyle( FontRendering rendering, Real thickness );
+  protected:
+    void forceUCS2Charmap();
+    void postLoad();
+    FontStylePtr getStyle( StyleID id );
+  public:
+    FontFaceImpl( FontImpl* font, FT_Library ft, FT_Open_Args* args, FaceID faceIndex, Real size );
+    Real size() const override;
+    Real ascender() const override;
+    Real descender() const override;
+    ~FontFaceImpl();
+  };
+
+  using FontFaceMap = map<FaceID, FontFacePtr>;
+
+  class FontImpl: public Font {
+    friend class ManagerImpl;
+    friend class FontFaceImpl;
+    friend class TextImpl;
+  private:
     bool loaded_ = false;
     void* userdata_ = nullptr;
   private:
     ManagerImpl* manager_;
-    FT_Face face_ = nullptr;
-    hb_font_t* hbfnt_ = nullptr;
-    GlyphMap glyphs_;
-    TextureAtlasPtr atlas_;
+    FontFaceMap faces_;
     unique_ptr<Buffer> data_;
     IDType id_;
-    bool dirty_ = false;
-    void load( span<uint8_t> source, Real pointSize, vec2i atlasSize );
+    FontFacePtr loadFace( span<uint8_t> source, FaceID faceIndex, Real size );
     void unload();
-    void postLoad();
-    void initEmptyGlyph();
-    void forceUCS2Charmap();
   protected:
-    void loadGlyph( GlyphIndex index, bool hinting );
-    Glyph* getGlyph( GlyphIndex index );
     void update(); // this will recreate the texture if needed
   public:
     FontImpl( ManagerImpl* manager, IDType id );
-    Real size() const override;
-    Real ascender() const override;
-    Real descender() const override;
-    bool loaded() const override;
-    bool dirty() const override;
-    void markClean() override;
-    const Texture& texture() const override;
+    FontLoadState loaded() const override;
     void setUser( void* data ) override;
     void* getUser() override;
     IDType id() const override;

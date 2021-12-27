@@ -4,6 +4,8 @@
 namespace newtype {
 
 #define FONT_IMPL_CAST(font) ( font ? dynamic_cast<FontImpl*>( font.get() ) : nullptr )
+#define FONTFACE_IMPL_CAST(face) ( face ? dynamic_cast<FontFaceImpl*>( face.get() ) : nullptr )
+#define FONTSTYLE_IMPL_CAST(style) ( style ? dynamic_cast<FontStyleImpl*>( style.get() ) : nullptr )
 #define TEXT_IMPL_CAST(text) ( text ? dynamic_cast<TextImpl*>( text.get() ) : nullptr )
 
   inline int iround( Real value )

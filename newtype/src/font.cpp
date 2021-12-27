@@ -10,32 +10,30 @@ namespace newtype {
     //
   }
 
-  FontImpl::FontImpl( ManagerImpl* manager, IDType id ): manager_( manager ), id_( id )
+  constexpr float c_fmagic = 64.0f;
+  constexpr int c_magic = 64;
+
+  constexpr uint32_t makeStoredFaceSize( Real size )
   {
-    //
+    return static_cast<uint32_t>( size * 1000.0f );
   }
 
-  IDType FontImpl::id() const
+  __forceinline StyleID makeStyleID( FaceID face, Real size, FontRendering rendering, Real thickness )
   {
-    return id_;
+    FontStyleIndex d;
+    d.components.face = ( face & 0xFFFF ); // no instance/variations support
+    d.components.outlineType = rendering;
+    d.components.outlineSize = ( rendering == FontRender_Normal ? 0 : static_cast<uint8_t>( thickness * 10.0f ) );
+    d.components.size = makeStoredFaceSize( size );
+    return d.value;
   }
 
-  void FontImpl::load( span<uint8_t> source, Real pointSize, vec2i atlasSize )
+  // FONT FACE ===============================================================
+
+  FontFaceImpl::FontFaceImpl( FontImpl* font, FT_Library ft, FT_Open_Args* args, FaceID faceIndex, Real size ):
+  font_( font ), size_( size )
   {
-    atlas_ = make_shared<TextureAtlas>( atlasSize, 1 );
-    manager_->host()->newtypeFontTextureCreated( *this, *atlas_.get() );
-
-    data_ = make_unique<Buffer>( manager_->host(), source );
-    size_ = pointSize;
-
-    auto ftlib = manager_->ft();
-
-    FT_Open_Args args = { 0 };
-    args.flags = FT_OPEN_MEMORY;
-    args.memory_base = data_->data();
-    args.memory_size = (FT_Long)data_->length();
-
-    auto fterr = FT_Open_Face( ftlib, &args, 0, &face_ );
+    auto fterr = FT_Open_Face( ft, args, faceIndex, &face_ );
     if ( fterr || !face_ )
       NEWTYPE_FREETYPE_EXCEPT( "FreeType font face load failed", fterr );
 
@@ -45,7 +43,7 @@ namespace newtype {
     if ( fterr )
       NEWTYPE_FREETYPE_EXCEPT( "FreeType font charmap selection failed", fterr );
 
-    fterr = FT_Set_Char_Size( face_, 0, iround( size_ * 64.0f ), c_dpi, c_dpi );
+    fterr = FT_Set_Char_Size( face_, 0, iround( size_ * c_fmagic ), c_dpi, c_dpi );
     if ( fterr )
       NEWTYPE_FREETYPE_EXCEPT( "FreeType font character point size setting failed", fterr );
 
@@ -61,12 +59,28 @@ namespace newtype {
     hb_ft_font_set_funcs( hbfnt_ ); // Doesn't create_referenced already call this?
 
     postLoad();
-    initEmptyGlyph();
-
-    loaded_ = true;
   }
 
-  void FontImpl::forceUCS2Charmap()
+  StyleID FontFaceImpl::loadStyle( FontRendering rendering, Real thickness )
+  {
+    auto id = makeStyleID( face_->face_index, size_, rendering, thickness );
+    if ( styles_.find( id ) != styles_.end() )
+      return id;
+
+    auto atlasSize = vec2i( 1024 );
+
+    auto style = make_shared<FontStyleImpl>( font_,
+      makeStoredFaceSize( size_ ),
+      atlasSize, font_->manager_->host(),
+      rendering, thickness );
+
+    assert( style->id() == id );
+
+    styles_[style->id()] = style;
+    return style->id();
+  }
+
+  void FontFaceImpl::forceUCS2Charmap()
   {
     assert( face_ );
 
@@ -80,16 +94,55 @@ namespace newtype {
     }
   }
 
-  void FontImpl::postLoad()
+  void FontFaceImpl::postLoad()
   {
     auto metrics = face_->size->metrics;
     ascender_ = static_cast<Real>( metrics.ascender >> 6 );
     descender_ = static_cast<Real>( metrics.descender >> 6 );
     size_ = static_cast<Real>( metrics.height >> 6 );
-    linegap_ = 0.0f;
   }
 
-  void FontImpl::initEmptyGlyph()
+  Real FontFaceImpl::size() const
+  {
+    return size_;
+  }
+
+  Real FontFaceImpl::ascender() const
+  {
+    return ascender_;
+  }
+
+  Real FontFaceImpl::descender() const
+  {
+    return descender_;
+  }
+
+  FontStylePtr FontFaceImpl::getStyle( StyleID id )
+  {
+    auto it = styles_.find( id );
+    if ( it == styles_.end() )
+      NEWTYPE_EXCEPT( "Style not loaded" );
+    return it->second;
+  }
+
+  FontFaceImpl::~FontFaceImpl()
+  {
+    if ( hbfnt_ )
+      hb_font_destroy( hbfnt_ );
+  }
+
+  // FONT STYLE ==============================================================
+
+  FontStyleImpl::FontStyleImpl( FontImpl* font, uint32_t size, vec2i atlasSize,
+  Host* host, FontRendering rendering, Real thickness ):
+  font_( font ), host_( host ), storedFaceSize_( size )
+  {
+    atlas_ = make_shared<TextureAtlas>( atlasSize, 1 );
+    host_->newtypeFontTextureCreated( *font_, id(), *atlas_.get() );
+    initEmptyGlyph();
+  }
+
+  void FontStyleImpl::initEmptyGlyph()
   {
     auto region = atlas_->getRegion( 5, 5 );
     if ( region.x < 0 )
@@ -117,34 +170,43 @@ namespace newtype {
     dirty_ = true;
   }
 
-  void FontImpl::loadGlyph( GlyphIndex index, bool hinting )
+  void FontStyleImpl::loadGlyph( FT_Library ft, FT_Face face, GlyphIndex index, bool hinting )
   {
-    auto ft = manager_->ft();
-
     FT_Int32 flags = 0;
-    flags |= FT_LOAD_RENDER;
+    flags |= FT_LOAD_DEFAULT;
     flags |= ( hinting ? FT_LOAD_FORCE_AUTOHINT : ( FT_LOAD_NO_HINTING | FT_LOAD_NO_AUTOHINT ) );
 
     if ( atlas_->depth() == 3 )
     {
       FT_Library_SetLcdFilter( ft, FT_LCD_FILTER_DEFAULT );
       flags |= FT_LOAD_TARGET_LCD;
-      uint8_t weights[5] = {0x10, 0x40, 0x70, 0x40, 0x10};
+      uint8_t weights[5] = { 0x10, 0x40, 0x70, 0x40, 0x10 };
       FT_Library_SetLcdFilterWeights( ft, weights );
     }
 
-    auto fterr = FT_Load_Glyph( face_, index, flags );
+    auto fterr = FT_Load_Glyph( face, index, flags );
     if ( fterr )
       NEWTYPE_FREETYPE_EXCEPT( "FreeType glyph loading error", fterr );
 
-    FT_GlyphSlot slot = nullptr;
-    FT_Bitmap bitmap;
+    FT_Stroker stroker;
+    FT_Stroker_New( ft, &stroker );
+    FT_Stroker_Set( stroker, 4 * c_magic, FT_STROKER_LINECAP_ROUND, FT_STROKER_LINEJOIN_ROUND, 0 );
+
+    //FT_GlyphSlot slot = nullptr;
+    //FT_Bitmap bitmap;
     vec2i glyphCoords;
 
-    slot = face_->glyph;
-    bitmap = slot->bitmap;
-    glyphCoords.x = slot->bitmap_left;
-    glyphCoords.y = slot->bitmap_top;
+    //slot = face_->glyph;
+    //bitmap = slot->bitmap;
+    FT_Glyph strokeglf;
+    FT_Get_Glyph( face->glyph, &strokeglf );
+    FT_Glyph_StrokeBorder( &strokeglf, stroker, false, true );
+    FT_Glyph_To_Bitmap( &strokeglf, FT_RENDER_MODE_NORMAL, nullptr, true );
+    auto bmglf = reinterpret_cast<FT_BitmapGlyph>( strokeglf );
+    auto bitmap = bmglf->bitmap;
+
+    glyphCoords.x = bmglf->left; // slot->bitmap_left;
+    glyphCoords.y = bmglf->top; // slot->bitmap_top;
 
     vec4i padding( 0, 0, 0, 0 );
 
@@ -159,7 +221,7 @@ namespace newtype {
 
     auto coord = vec2i( region.x, region.y );
     {
-      Buffer tmp( manager_->host(), static_cast<uint32_t>( tgt_w * tgt_h * atlas_->depth() ) );
+      Buffer tmp( host_, static_cast<uint32_t>( tgt_w * tgt_h * atlas_->depth() ) );
       auto dst_ptr = tmp.data() + ( padding.y * tgt_w + padding.x ) * atlas_->depth();
       auto src_ptr = bitmap.buffer;
       for ( uint32_t i = 0; i < src_h; ++i )
@@ -185,14 +247,14 @@ namespace newtype {
     dirty_ = true;
   }
 
-  Glyph* FontImpl::getGlyph( GlyphIndex index )
+  Glyph* FontStyleImpl::getGlyph( FT_Library ft, FT_Face face, GlyphIndex index )
   {
     {
       const auto& glyph = glyphs_.find( index );
       if ( glyph != glyphs_.end() )
         return &( ( *glyph ).second );
     }
-    loadGlyph( index, true );
+    loadGlyph( ft, face, index, true );
     {
       const auto& glyph = glyphs_.find( index );
       if ( glyph != glyphs_.end() )
@@ -201,54 +263,69 @@ namespace newtype {
     return nullptr;
   }
 
-  void FontImpl::unload()
-  {
-    if ( hbfnt_ )
-      hb_font_destroy( hbfnt_ );
-    manager_->host()->newtypeFontTextureDestroyed( *this, *atlas_.get() );
-    atlas_.reset();
-    data_.reset();
-    size_ = 0.0f;
-    loaded_ = false;
-    // I think the face is destroyed by HB
-    //if ( face_ )
-    //  FT_Done_Face( face_ );
-  }
-
-  Real FontImpl::size() const
-  {
-    return size_;
-  }
-
-  Real FontImpl::ascender() const
-  {
-    return ascender_;
-  }
-
-  Real FontImpl::descender() const
-  {
-    return descender_;
-  }
-
-  bool FontImpl::loaded() const
-  {
-    return loaded_;
-  }
-
-  bool FontImpl::dirty() const
+  bool FontStyleImpl::dirty() const
   {
     return dirty_;
   }
 
-  void FontImpl::markClean()
+  void FontStyleImpl::markClean()
   {
     dirty_ = false;
   }
 
-  const Texture& FontImpl::texture() const
+  const Texture& FontStyleImpl::texture() const
   {
     assert( atlas_ );
     return *atlas_.get();
+  }
+
+  FontStyleImpl::~FontStyleImpl()
+  {
+    host_->newtypeFontTextureDestroyed( *font_, id(), *atlas_.get() );
+    atlas_.reset();
+  }
+
+  StyleID FontStyleImpl::id() const
+  {
+    return makeStyleID( 0, 0, rendering_, outlineThickness_ );
+  }
+
+  // FONT ====================================================================
+
+  FontFacePtr FontImpl::loadFace( span<uint8_t> source, FaceID faceIndex, Real size )
+  {
+    // Make a safety copy in our own memory
+    // Loading new styles on the fly later could still access this memory
+    // and we won't rely on the host keeping that available and alive
+    // Of course, if multiple faces are actually loaded from different blobs
+    // despite belonging to the same font, this copy will only contain the
+    // last loaded one - but that's pretty suspect behavior anyway, don't do it
+    data_ = make_unique<Buffer>( manager_->host(), source );
+
+    auto ftlib = manager_->ft();
+
+    FT_Open_Args args = { 0 };
+    args.flags = FT_OPEN_MEMORY;
+    args.memory_base = data_->data();
+    args.memory_size = (FT_Long)data_->length();
+
+    auto face = make_shared<FontFaceImpl>( this, ftlib, &args, faceIndex, size );
+    faces_[faceIndex] = face;
+
+    loaded_ = true;
+
+    return move( face );
+  }
+
+  void FontImpl::unload()
+  {
+    data_.reset();
+    loaded_ = false;
+  }
+
+  FontLoadState FontImpl::loaded() const
+  {
+    return ( loaded_ ? FontLoad_Loaded : FontLoad_NotReady );
   }
 
   void FontImpl::setUser( void* data )
@@ -259,6 +336,16 @@ namespace newtype {
   void* FontImpl::getUser()
   {
     return userdata_;
+  }
+
+  FontImpl::FontImpl( ManagerImpl* manager, IDType id ): manager_( manager ), id_( id )
+  {
+    //
+  }
+
+  IDType FontImpl::id() const
+  {
+    return id_;
   }
 
 }

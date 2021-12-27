@@ -25,8 +25,8 @@ namespace newtype {
 
   }
 
-  TextImpl::TextImpl( ManagerImpl* manager, IDType id, FontPtr font, const Text::Features& features ):
-  manager_( manager ), id_( id ), font_( move( font ) )
+  TextImpl::TextImpl( ManagerImpl* manager, IDType id, FontFacePtr face, StyleID style, const Text::Features& features ):
+  manager_( manager ), id_( id ), face_( move( face ) ), style_( style )
   {
     hbbuf_ = hb_buffer_create();
     string lang = "en";
@@ -61,10 +61,18 @@ namespace newtype {
 
   void TextImpl::regenerate()
   {
-    auto fnt = FONT_IMPL_CAST( font_ );
+    auto fce = FONTFACE_IMPL_CAST( face_ );
 
-    if ( !dirty_ || !fnt || !fnt->loaded() )
+    if ( !dirty_ || !fce || !fce->font_->loaded() )
       return;
+
+    FontStyleImpl* style = nullptr;
+    {
+      auto pimpl = fce->getStyle( style_ );
+      style = FONTSTYLE_IMPL_CAST( pimpl );
+      if ( !style )
+        NEWTYPE_EXCEPT( "Style implementation cast failed" );
+    }
 
     // TODO handle special case where textdata doesn't exist (= generate empty mesh)
 
@@ -82,15 +90,15 @@ namespace newtype {
     hb_buffer_add_utf16( hbbuf_, reinterpret_cast<const uint16_t*>( text_.getBuffer() ), text_.length(), 0, text_.length() );
 
     hb_shape(
-      fnt->hbfnt_,
+      fce->hbfnt_,
       hbbuf_,
       features_.empty() ? nullptr : features_.data(), static_cast<int>( features_.size() )
     );
 
     auto position = pen_;
 
-    const auto ascender = font_->ascender();
-    const auto descender = font_->descender();
+    const auto ascender = fce->ascender();
+    const auto descender = fce->descender();
 
     position.y += ascender + descender;
 
@@ -109,10 +117,10 @@ namespace newtype {
       if ( chartype == U_CONTROL_CHAR && glyphindex == 0 )
       {
         position.x = pen_.x;
-        position.y += ( font_->ascender() - font_->descender() );
+        position.y += ( fce->ascender() - fce->descender() );
         continue;
       }
-      auto glyph = fnt->getGlyph( glyphindex );
+      auto glyph = style->getGlyph( manager_->ft(), fce->face_, glyphindex );
       auto offset = vec2( gpos[i].x_offset, gpos[i].y_offset ) / 64.0f;
       auto advance = vec2( gpos[i].x_advance, gpos[i].y_advance ) / 64.0f;
 
@@ -169,9 +177,9 @@ namespace newtype {
     return dirty_;
   }
 
-  FontPtr TextImpl::font()
+  FontFacePtr TextImpl::face()
   {
-    return font_;
+    return face_;
   }
 
   void TextImpl::setUser( void* data )

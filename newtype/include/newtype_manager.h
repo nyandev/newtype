@@ -7,6 +7,7 @@ namespace newtype {
 
   class ManagerImpl: public Manager {
     friend class FontImpl;
+    friend class TextImpl;
   private:
     Host* host_;
     FT_MemoryRec_ ftMemAllocator_;
@@ -22,6 +23,7 @@ namespace newtype {
       unsigned int minor;
       unsigned int patch;
     } hbVersion_ = { 0 };
+    string verstr_;
     FontVector fonts_;
     IDType fontIndex_ = 0;
     IDType textIndex_ = 0;
@@ -31,13 +33,18 @@ namespace newtype {
     ManagerImpl( Host* host );
     inline Host* host() { return host_; }
     bool initialize();
-    FontPtr createFont() override;
-    virtual void loadFont( FontPtr font, span<uint8_t> buffer, Real size );
-    void unloadFont( FontPtr font ) override;
-    TextPtr createText( FontPtr font ) override;
-    virtual FontVector& fonts();
     void shutdown();
     ~ManagerImpl();
+    // Font overrides
+    FontPtr createFont() override;
+    FontFacePtr loadFace( FontPtr font, span<uint8_t> buffer, FaceID faceIndex, Real size ) override;
+    StyleID loadStyle( FontFacePtr face, FontRendering rendering, Real thickness ) override;
+    void unloadFont( FontPtr font ) override;
+    // Text overrides
+    TextPtr createText( FontFacePtr face, StyleID style ) override;
+    // Other overrides
+    const string& versionString() const override;
+    FontVector& fonts() override;
   };
 
 }
