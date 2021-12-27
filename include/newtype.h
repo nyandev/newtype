@@ -112,6 +112,7 @@ namespace newtype {
     virtual Real size() const = 0;
     virtual Real ascender() const = 0;
     virtual Real descender() const = 0;
+    virtual FontStylePtr getStyle( StyleID id ) = 0;
   };
 
   using FontFacePtr = shared_ptr<FontFace>;
@@ -143,11 +144,12 @@ namespace newtype {
     virtual void pen( const vec3& pen ) = 0;
     virtual bool dirty() const = 0;
     virtual FontFacePtr face() = 0;
+    virtual StyleID styleid() const = 0;
     virtual void setUser( void* data ) = 0;
     virtual void* getUser() = 0;
     virtual IDType id() const = 0;
   };
-   
+
   using TextPtr = shared_ptr<Text>;
 
   class Manager {

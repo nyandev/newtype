@@ -18,14 +18,19 @@ namespace newtype {
     return static_cast<uint32_t>( size * 1000.0f );
   }
 
-  __forceinline StyleID makeStyleID( FaceID face, Real size, FontRendering rendering, Real thickness )
+  __forceinline StyleID makeStyleID( FaceID face, uint32_t size, FontRendering rendering, Real thickness )
   {
     FontStyleIndex d;
     d.components.face = ( face & 0xFFFF ); // no instance/variations support
     d.components.outlineType = rendering;
     d.components.outlineSize = ( rendering == FontRender_Normal ? 0 : static_cast<uint8_t>( thickness * 10.0f ) );
-    d.components.size = makeStoredFaceSize( size );
+    d.components.size = size;
     return d.value;
+  }
+
+  __forceinline StyleID makeStyleID( FaceID face, Real size, FontRendering rendering, Real thickness )
+  {
+    return makeStyleID( face, makeStoredFaceSize( size ), rendering, thickness );
   }
 
   // FONT FACE ===============================================================
@@ -70,11 +75,15 @@ namespace newtype {
     auto atlasSize = vec2i( 1024 );
 
     auto style = make_shared<FontStyleImpl>( font_,
+      face_->face_index,
       makeStoredFaceSize( size_ ),
       atlasSize, font_->manager_->host(),
       rendering, thickness );
 
-    assert( style->id() == id );
+    auto cmp = style->id();
+    FontStyleIndex asdasdasd;
+    asdasdasd.value = cmp;
+    assert( asdasdasd.value == id );
 
     styles_[style->id()] = style;
     return style->id();
@@ -133,9 +142,10 @@ namespace newtype {
 
   // FONT STYLE ==============================================================
 
-  FontStyleImpl::FontStyleImpl( FontImpl* font, uint32_t size, vec2i atlasSize,
+  FontStyleImpl::FontStyleImpl( FontImpl* font, FT_Long face, uint32_t size, vec2i atlasSize,
   Host* host, FontRendering rendering, Real thickness ):
-  font_( font ), host_( host ), storedFaceSize_( size )
+  font_( font ), host_( host ), storedFaceSize_( size ), storedFaceIndex_( face ),
+  rendering_( rendering ), outlineThickness_( thickness )
   {
     atlas_ = make_shared<TextureAtlas>( atlasSize, 1 );
     host_->newtypeFontTextureCreated( *font_, id(), *atlas_.get() );
@@ -186,27 +196,39 @@ namespace newtype {
 
     auto fterr = FT_Load_Glyph( face, index, flags );
     if ( fterr )
-      NEWTYPE_FREETYPE_EXCEPT( "FreeType glyph loading error", fterr );
+      NEWTYPE_FREETYPE_EXCEPT( "FreeType glyph load error", fterr );
 
-    FT_Stroker stroker;
-    FT_Stroker_New( ft, &stroker );
-    FT_Stroker_Set( stroker, 4 * c_magic, FT_STROKER_LINECAP_ROUND, FT_STROKER_LINEJOIN_ROUND, 0 );
-
-    //FT_GlyphSlot slot = nullptr;
-    //FT_Bitmap bitmap;
+    FT_Bitmap bitmap;
     vec2i glyphCoords;
 
-    //slot = face_->glyph;
-    //bitmap = slot->bitmap;
-    FT_Glyph strokeglf;
-    FT_Get_Glyph( face->glyph, &strokeglf );
-    FT_Glyph_StrokeBorder( &strokeglf, stroker, false, true );
-    FT_Glyph_To_Bitmap( &strokeglf, FT_RENDER_MODE_NORMAL, nullptr, true );
-    auto bmglf = reinterpret_cast<FT_BitmapGlyph>( strokeglf );
-    auto bitmap = bmglf->bitmap;
+    if ( rendering_ == FontRender_Normal )
+    {
+      FT_GlyphSlot slot = face->glyph;
+      fterr = FT_Render_Glyph( slot, FT_RENDER_MODE_NORMAL );
+      if ( fterr )
+        NEWTYPE_FREETYPE_EXCEPT( "FreeType glyph render error", fterr );
+      bitmap = slot->bitmap;
+      glyphCoords.x = slot->bitmap_left;
+      glyphCoords.y = slot->bitmap_top;
+    }
+    else if ( rendering_ == FontRender_Outline_Expand )
+    {
+      FT_Stroker stroker;
+      FT_Stroker_New( ft, &stroker );
+      auto dist = static_cast<signed long>( outlineThickness_ * c_fmagic );
+      FT_Stroker_Set( stroker, dist, FT_STROKER_LINECAP_ROUND, FT_STROKER_LINEJOIN_ROUND, 0 );
 
-    glyphCoords.x = bmglf->left; // slot->bitmap_left;
-    glyphCoords.y = bmglf->top; // slot->bitmap_top;
+      FT_Glyph ftglyph;
+      FT_Get_Glyph( face->glyph, &ftglyph );
+      FT_Glyph_StrokeBorder( &ftglyph, stroker, false, true );
+      FT_Glyph_To_Bitmap( &ftglyph, FT_RENDER_MODE_NORMAL, nullptr, true );
+      auto bmglyph = reinterpret_cast<FT_BitmapGlyph>( ftglyph );
+      bitmap = bmglyph->bitmap;
+      glyphCoords.x = bmglyph->left;
+      glyphCoords.y = bmglyph->top;
+    }
+    else
+      NEWTYPE_EXCEPT( "Unknown rendering mode" );
 
     vec4i padding( 0, 0, 0, 0 );
 
@@ -287,7 +309,7 @@ namespace newtype {
 
   StyleID FontStyleImpl::id() const
   {
-    return makeStyleID( 0, 0, rendering_, outlineThickness_ );
+    return makeStyleID( storedFaceIndex_, storedFaceSize_, rendering_, outlineThickness_ );
   }
 
   // FONT ====================================================================

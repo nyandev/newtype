@@ -55,6 +55,7 @@ namespace newtype {
   private:
     FontImpl* font_;
     uint32_t storedFaceSize_;
+    FT_Long storedFaceIndex_;
     Host* host_;
     FontRendering rendering_;
     Real outlineThickness_;
@@ -65,7 +66,7 @@ namespace newtype {
     void initEmptyGlyph();
     void loadGlyph( FT_Library ft, FT_Face face, GlyphIndex index, bool hinting );
   public:
-    FontStyleImpl( FontImpl* font, uint32_t size, vec2i atlasSize, Host* host, FontRendering rendering, Real thickness );
+    FontStyleImpl( FontImpl* font, FT_Long face, uint32_t size, vec2i atlasSize, Host* host, FontRendering rendering, Real thickness );
     StyleID id() const;
     Glyph* getGlyph( FT_Library ft, FT_Face face, GlyphIndex index );
     bool dirty() const override;
@@ -92,12 +93,12 @@ namespace newtype {
   protected:
     void forceUCS2Charmap();
     void postLoad();
-    FontStylePtr getStyle( StyleID id );
   public:
     FontFaceImpl( FontImpl* font, FT_Library ft, FT_Open_Args* args, FaceID faceIndex, Real size );
     Real size() const override;
     Real ascender() const override;
     Real descender() const override;
+    FontStylePtr getStyle( StyleID id ) override;
     ~FontFaceImpl();
   };
 

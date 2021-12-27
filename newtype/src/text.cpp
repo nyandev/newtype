@@ -135,10 +135,10 @@ namespace newtype {
       auto color = vec4( 1.0f, 1.0f, 1.0f, 1.0f );
 
       auto index = static_cast<VertexIndex>( mesh_.vertices_.size() );
-      mesh_.vertices_.push_back( Vertex( vec3( p0.x, p0.y, position.z ), vec2( glyph->coords[0].x, glyph->coords[0].y ), color ) );
-      mesh_.vertices_.push_back( Vertex( vec3( p0.x, p1.y, position.z ), vec2( glyph->coords[0].x, glyph->coords[1].y ), color ) );
-      mesh_.vertices_.push_back( Vertex( vec3( p1.x, p1.y, position.z ), vec2( glyph->coords[1].x, glyph->coords[1].y ), color ) );
-      mesh_.vertices_.push_back( Vertex( vec3( p1.x, p0.y, position.z ), vec2( glyph->coords[1].x, glyph->coords[0].y ), color ) );
+      mesh_.vertices_.emplace_back( vec3( p0.x, p0.y, position.z ), vec2( glyph->coords[0].x, glyph->coords[0].y ), color );
+      mesh_.vertices_.emplace_back( vec3( p0.x, p1.y, position.z ), vec2( glyph->coords[0].x, glyph->coords[1].y ), color );
+      mesh_.vertices_.emplace_back( vec3( p1.x, p1.y, position.z ), vec2( glyph->coords[1].x, glyph->coords[1].y ), color );
+      mesh_.vertices_.emplace_back( vec3( p1.x, p0.y, position.z ), vec2( glyph->coords[1].x, glyph->coords[0].y ), color );
 
       Indices idcs = { index + 0, index + 1, index + 2, index + 0, index + 2, index + 3 };
       mesh_.indices_.insert( mesh_.indices_.end(), idcs.begin(), idcs.end() );
@@ -180,6 +180,11 @@ namespace newtype {
   FontFacePtr TextImpl::face()
   {
     return face_;
+  }
+
+  StyleID TextImpl::styleid() const
+  {
+    return style_;
   }
 
   void TextImpl::setUser( void* data )

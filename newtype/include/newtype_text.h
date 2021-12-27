@@ -32,6 +32,7 @@ namespace newtype {
     void pen( const vec3& pen ) override;
     bool dirty() const override;
     FontFacePtr face() override;
+    StyleID styleid() const override;
     void regenerate();
     void setUser( void* data ) override;
     void* getUser() override;
