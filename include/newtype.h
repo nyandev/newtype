@@ -100,6 +100,7 @@ namespace newtype {
 
   class FontStyle {
   public:
+    virtual ~FontStyle();
     virtual bool dirty() const = 0;
     virtual const Texture& texture() const = 0;
     virtual void markClean() = 0;
@@ -109,6 +110,7 @@ namespace newtype {
 
   class FontFace {
   public:
+    virtual ~FontFace();
     virtual Real size() const = 0;
     virtual Real ascender() const = 0;
     virtual Real descender() const = 0;

@@ -88,6 +88,13 @@ namespace newtype {
     if ( !fnt )
       NEWTYPE_EXCEPT( "Font implementation cast failed" );
     fnt->unload();
+    for ( auto it = fonts_.begin(); it != fonts_.end(); )
+    {
+      if ( ( *it )->id() == fnt->id() )
+        it = fonts_.erase( it );
+      else
+        ++it;
+    }
   }
 
   TextPtr ManagerImpl::createText( FontFacePtr face, StyleID style )

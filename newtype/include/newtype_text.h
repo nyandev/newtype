@@ -9,7 +9,7 @@ namespace newtype {
   class TextImpl: public Text {
   private:
     ManagerImpl* manager_;
-    vec3 pen_;
+    vec3 pen_ = vec3( 0.0f );
     hb_language_t language_;
     hb_script_t script_;
     hb_direction_t direction_;

@@ -10,6 +10,16 @@ namespace newtype {
     //
   }
 
+  FontStyle::~FontStyle()
+  {
+    //
+  }
+
+  FontFace::~FontFace()
+  {
+    //
+  }
+
   constexpr float c_fmagic = 64.0f;
   constexpr int c_magic = 64;
 
@@ -136,6 +146,7 @@ namespace newtype {
 
   FontFaceImpl::~FontFaceImpl()
   {
+    styles_.clear();
     if ( hbfnt_ )
       hb_font_destroy( hbfnt_ );
   }
@@ -363,6 +374,11 @@ namespace newtype {
   FontImpl::FontImpl( ManagerImpl* manager, IDType id ): manager_( manager ), id_( id )
   {
     //
+  }
+
+  FontImpl::~FontImpl()
+  {
+    faces_.clear();
   }
 
   IDType FontImpl::id() const

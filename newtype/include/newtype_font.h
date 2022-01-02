@@ -72,7 +72,7 @@ namespace newtype {
     bool dirty() const override;
     void markClean() override;
     const Texture& texture() const override;
-    ~FontStyleImpl();
+    virtual ~FontStyleImpl();
   };
 
   using FontStyleMap = map<StyleID, FontStylePtr>;
@@ -99,7 +99,7 @@ namespace newtype {
     Real ascender() const override;
     Real descender() const override;
     FontStylePtr getStyle( StyleID id ) override;
-    ~FontFaceImpl();
+    virtual ~FontFaceImpl();
   };
 
   using FontFaceMap = map<FaceID, FontFacePtr>;
@@ -126,6 +126,7 @@ namespace newtype {
     void setUser( void* data ) override;
     void* getUser() override;
     IDType id() const override;
+    virtual ~FontImpl();
   };
 
 }
