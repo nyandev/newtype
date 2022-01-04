@@ -20,9 +20,6 @@ namespace newtype {
     //
   }
 
-  constexpr float c_fmagic = 64.0f;
-  constexpr int c_magic = 64;
-
   constexpr uint32_t makeStoredFaceSize( Real size )
   {
     return static_cast<uint32_t>( size * 1000.0f );

@@ -121,8 +121,8 @@ namespace newtype {
         continue;
       }
       auto glyph = style->getGlyph( manager_->ft(), fce->face_, glyphindex );
-      auto offset = vec2( gpos[i].x_offset, gpos[i].y_offset ) / 64.0f;
-      auto advance = vec2( gpos[i].x_advance, gpos[i].y_advance ) / 64.0f;
+      auto offset = vec2( gpos[i].x_offset, gpos[i].y_offset ) / c_fmagic;
+      auto advance = vec2( gpos[i].x_advance, gpos[i].y_advance ) / c_fmagic;
 
       auto p0 = vec2(
         ( position.x + offset.x + glyph->bearing.x ),

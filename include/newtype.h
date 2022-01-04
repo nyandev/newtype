@@ -12,6 +12,10 @@
 
 namespace newtype {
 
+  // Current library version;
+  // Pass this to Initialize()
+  constexpr uint32_t c_headerVersion = 2;
+
   constexpr int c_dpi = 72;
 
   using IDType = uint64_t;

@@ -4,14 +4,13 @@
 
 using namespace newtype;
 
-const uint32_t c_libraryVersion = 1;
 static unique_ptr<ManagerImpl> g_instance;
 
 extern "C" {
 
   NEWTYPE_EXPORT Manager* NEWTYPE_CALL newtypeInitialize( uint32_t version, Host* host )
   {
-    if ( version != c_libraryVersion )
+    if ( version != c_headerVersion )
       return nullptr;
     g_instance = std::make_unique<ManagerImpl>( host );
     g_instance->initialize();

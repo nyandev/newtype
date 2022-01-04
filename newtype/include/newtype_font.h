@@ -8,6 +8,9 @@ namespace newtype {
   class FontImpl;
   class TextImpl;
 
+  constexpr float c_fmagic = 64.0f;
+  constexpr int c_magic = 64;
+
   class TextureAtlas: public Texture {
   private:
     vector<vec3i> nodes_;
