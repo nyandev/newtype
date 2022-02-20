@@ -1,8 +1,9 @@
 # Newtype - A `nyandev` Library Classic.
-Welcome, traveler!  
+Welcome, traveler!
+
 **Newtype is a C++ middleware library and dependency wrapper for pretty text/font rendering for realtime graphics applications.**
 
-More precisely, Newtype is a library that statically binds together an instance of **[FreeType](https://freetype.org/)** and an instance of **[HarfBuzz](https://github.com/harfbuzz/harfbuzz)**.  
+More precisely, Newtype is a library that statically binds together an instance of **[FreeType](https://freetype.org/)** and an instance of **[HarfBuzz](https://github.com/harfbuzz/harfbuzz)**.
 FreeType is perhaps the best known and most used cross-platform font rasterization engine, and HarfBuzz is a similarly mature and widely used cross-platform text shaping library.
 
 ### What's all that mean?
@@ -15,18 +16,19 @@ By far the easiest solution to this problem is just building both FreeType and H
 
 Additionally, though, as Newtype was created for the needs of a (currently closed) game engine project, it is fairly opinionated in what features of each library are going to be used, and only in itself exports classes that wrap that functionality for even further simplicity.
 
-**Newtype does not forward export any functions from either FreeType or Harfbuzz by themselves.**  
+**Newtype does not forward export any functions from either FreeType or Harfbuzz by themselves.**
 Newtype has an API of its own, meant to be usable without the caller having to know anything about FreeType or HarfBuzz under the hood.
 
 Newtype exports an interface for loading fonts, creating and updating text meshes, and dynamically manages atlas textures created from these fonts as needed.
-Newtype currently does not support signed distance field rendering or textures, though those might well be added later
+Newtype currently does not support signed distance field rendering or textures, though those might well be added later.
 
 ### Licensing
-Newtype is licensed under the MIT license. The author claims no right to any part of the underlying libraries, and even most of the functionality in Newtype has been mxied and matched from elsewhere to create a minimum viable product rather quickly for a particular use case.
+**Newtype is licensed under the MIT license**. The author claims no right to any part of the underlying libraries, and even most of the functionality in Newtype has been mixed and matched from public sources elsewhere to create a minimum viable product rather quickly for a particular use case.
 
 ### Going forward
 I wouldn't mind it at all if Newtype were to grow into something more mature and universally usable.  
 All improvement suggestions, forks an pull requests are very welcome!  
 If you'd just like to chat about the project, please visit the Discussions page.
 
-Thanks for reading, and I hope're having a nice day, friend :)
+### Thanks
+Thanks for reading, and I hope're having a nice day, friend! :)
